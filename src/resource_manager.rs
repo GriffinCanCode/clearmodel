@@ -75,7 +75,12 @@ impl ResourceManager {
         
         let cache_paths = self.config.existing_cache_paths();
         if cache_paths.is_empty() {
-            warn!("No existing cache directories found");
+            info!("No existing cache directories found to clean");
+            info!("Configured cache paths:");
+            for path in &self.config.cache_paths {
+                info!("  - {:?} (does not exist)", path);
+            }
+            info!("This is normal if you haven't used ML frameworks yet that create these cache directories");
             return Ok(Vec::new());
         }
         

@@ -40,9 +40,13 @@ impl CacheCleaner {
         let ml_results = self.clean_ml_model_caches(dry_run).await?;
         self.log_cleanup_results("ML Model Caches", &ml_results);
         
-        // Clean Python cache files
-        let python_result = self.clean_python_cache_files(dry_run).await?;
-        self.log_cleanup_results("Python Caches", &[python_result]);
+        // Only clean Python cache files if we have cache directories or if current dir looks like a project
+        if !ml_results.is_empty() || self.current_dir_looks_like_project().await? {
+            let python_result = self.clean_python_cache_files(dry_run).await?;
+            self.log_cleanup_results("Python Caches", &[python_result]);
+        } else {
+            info!("Skipping Python cache cleanup - no cache directories found and current directory doesn't appear to be a Python project");
+        }
         
         info!("All cache cleaning operations completed successfully");
         Ok(())
@@ -105,8 +109,8 @@ impl CacheCleaner {
             return Ok(());
         }
         
-        // Add confirmation flag to avoid interactive prompts
-        cmd.arg("--yes");
+        // Add flag to disable TUI and avoid interactive prompts
+        cmd.arg("--disable-tui");
         
         let timeout_duration = Duration::from_secs(300); // 5 minutes timeout
         
@@ -155,9 +159,54 @@ impl CacheCleaner {
         Ok(())
     }
     
+    /// Check if current directory looks like a Python project
+    async fn current_dir_looks_like_project(&self) -> Result<bool> {
+        let current_dir = std::env::current_dir()
+            .map_err(|e| ClearModelError::file_operation(
+                format!("Failed to get current directory: {}", e),
+                None
+            ))?;
+        
+        // Look for common Python project indicators
+        let project_indicators = [
+            "setup.py",
+            "pyproject.toml",
+            "requirements.txt",
+            "Pipfile",
+            "poetry.lock",
+            "__pycache__",
+            ".py",  // Any .py files
+        ];
+        
+        for indicator in &project_indicators {
+            if *indicator == ".py" {
+                // Check for any .py files
+                if let Ok(entries) = std::fs::read_dir(&current_dir) {
+                    for entry in entries.flatten() {
+                        if let Some(ext) = entry.path().extension() {
+                            if ext == "py" {
+                                debug!("Found Python files in current directory");
+                                return Ok(true);
+                            }
+                        }
+                    }
+                }
+            } else {
+                let indicator_path = current_dir.join(indicator);
+                if indicator_path.exists() {
+                    debug!("Found project indicator: {:?}", indicator);
+                    return Ok(true);
+                }
+            }
+        }
+        
+        debug!("Current directory doesn't appear to be a Python project");
+        Ok(false)
+    }
+
     /// Clean Python cache files in the current directory and subdirectories
     async fn clean_python_cache_files(&self, dry_run: bool) -> Result<CleanupResult> {
-        info!("Cleaning Python cache files");
+        info!("Cleaning Python cache files in current directory");
         
         let result = self.resource_manager.clean_python_caches(dry_run).await?;
         
