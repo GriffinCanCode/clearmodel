@@ -1,0 +1,95 @@
+# ClearModel Configuration Example
+# Save this as clearmodel.toml in your working directory
+
+# Cache directories to clean
+# These paths will be expanded (~ becomes home directory)
+cache_paths = [
+    # HuggingFace cache
+    "~/.cache/huggingface",
+    
+    # PyTorch cache
+    "~/.cache/torch",
+    "~/Library/Caches/torch",  # macOS specific
+    
+    # TensorFlow cache
+    "~/.cache/tensorflow",
+    
+    # Keras cache
+    "~/.cache/keras",
+    "~/.keras",
+    
+    # Transformers cache
+    "~/.cache/transformers",
+    "~/.transformers",
+    
+    # Other ML framework caches
+    "~/.cache/anthropic",
+    "~/.cache/openai",
+    "~/.cache/pytorch",
+    "~/.cache/models",
+    
+    # macOS specific paths
+    "~/Library/Caches/tensorflow",
+    "~/Library/Caches/models",
+]
+
+# Maximum age of cache files in days
+# Files older than this will be deleted
+max_cache_age_days = 7
+
+# Maximum number of parallel operations
+# Adjust based on your system's capabilities
+max_parallel_operations = 10
+
+# Whether to follow symbolic links during traversal
+# Generally recommended to keep false for security
+follow_symlinks = false
+
+# File extensions to target for Python cache cleanup
+python_cache_extensions = [
+    ".pyc",  # Compiled Python files
+    ".pyo",  # Optimized Python files
+    ".pyd",  # Python extension modules (Windows)
+]
+
+# Directories to skip during cleanup
+# These will be completely ignored
+skip_directories = [
+    ".git",
+    ".svn",
+    ".hg",
+    "node_modules",
+    ".venv",
+    "venv",
+    "__pycache__",
+    ".pytest_cache",
+    ".tox",
+    ".coverage",
+]
+
+# Minimum free space threshold (in GB) before cleanup
+# If available space is below this, cleanup will be more aggressive
+min_free_space_gb = 1
+
+# Whether to perform dry run by default
+# Can be overridden with command line flags
+default_dry_run = false
+
+# Logging level: "error", "warn", "info", "debug", "trace"
+log_level = "info"
+
+# Security settings
+[security]
+# Whether to validate that paths are actually cache directories
+validate_cache_paths = true
+
+# Whether to check for path traversal attempts
+check_path_traversal = true
+
+# Maximum directory depth to traverse
+# Prevents infinite recursion and limits scope
+max_path_depth = 20
+
+# Require confirmation for deletions above this threshold (GB)
+# Set to null to disable confirmation prompts
+require_confirmation_threshold_gb = 10 
